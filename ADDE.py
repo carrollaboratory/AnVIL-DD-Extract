@@ -2,12 +2,28 @@
 
 import json
 import re
+from pathlib import Path
 from typing import List, Dict, Any
 import pandas as pd
 import argparse
 from phs2dd import main as phs2dd
 from tdr2dd import main as tdr2dd
 import os
+
+ROOT_DIR = Path(__file__).resolve().parent
+DATASET_RESULTS_DIR = ROOT_DIR / "data" / "dataset_results"
+QUERY_RESULTS_DIR = ROOT_DIR / "data" / "query_results"
+
+
+def find_latest_dataset_file(dataset_results_dir: Path = DATASET_RESULTS_DIR) -> Path:
+    dataset_files = sorted(dataset_results_dir.glob("datasets_????????.json"))
+    if not dataset_files:
+        raise FileNotFoundError(
+            f"No dataset index found in {dataset_results_dir}. "
+            "Run refresh_duos_datasets.py first or provide --dataset-file."
+        )
+    return dataset_files[-1]
+
 
 def load_duos_index(index_file_path: str) -> List[Dict[str, Any]]:
     with open(index_file_path, 'r', encoding='utf-8') as f:
@@ -90,7 +106,7 @@ def main(index_file_path: str, user_query: str,enumeration_threshold):
     if rows:
         study_name = rows[0]['study_name']
         sanitized_study_name = sanitize_directory_name(study_name)
-        study_dir = f"query_results/{sanitized_study_name}"
+        study_dir = QUERY_RESULTS_DIR / sanitized_study_name
         print(f"Saving results to directory: {study_dir}")
         os.makedirs(study_dir, exist_ok=True)
         filename = os.path.join(study_dir, 'study_results.csv')
@@ -99,7 +115,6 @@ def main(index_file_path: str, user_query: str,enumeration_threshold):
         tdr2dd(object_id_list, study_dir, enumeration_threshold)
 
 if __name__ == "__main__":
-    duos_index_path = "./AnVIL_All_Studies.json"
     user_search_string = ""
     parser = argparse.ArgumentParser(description="Search DUOS index for studies.")
     parser.add_argument(
@@ -108,8 +123,14 @@ if __name__ == "__main__":
         required=True,
         help=" use --query Search string for study title."
     )
+    parser.add_argument(
+        "--dataset-file",
+        type=Path,
+        help="Dataset JSON file to search. Defaults to the newest data/dataset_results/datasets_YYYYMMDD.json.",
+    )
     parser.add_argument('--enumeration_threshold', required=False, help='percentage of unique values to be considered enumerated')
     args = parser.parse_args()
     user_search_string = args.query
     enumeration_threshold = args.enumeration_threshold or 30
-    main(duos_index_path, user_search_string,enumeration_threshold)
+    duos_index_path = args.dataset_file or find_latest_dataset_file()
+    main(str(duos_index_path), user_search_string,enumeration_threshold)

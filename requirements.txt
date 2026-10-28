@@ -1,3 +1,13 @@
 requests
 pandas
 openpyxl
+data-repo-client
+requests==2.34.2
+pandas==2.2.3
+openpyxl==3.1.5
+beautifulsoup4==4.15.0
+lxml==6.1.3
+soupsieve==3.0.4
+google-auth
+google-cloud-bigquery
+db-dtypes

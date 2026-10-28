@@ -25,9 +25,32 @@ AnVIL-DD-Extract is a Python-based tool designed to extract and process study me
 
 ## Usage
 
+### Refresh the DUOS Dataset Index
+
+Authenticate with Google Application Default Credentials in the environment
+that has access to DUOS, then fetch the current dataset index:
+
+```bash
+gcloud auth application-default login
+python refresh_duos_datasets.py
+```
+
+If Application Default Credentials are not available, provide an existing
+access token through the environment instead:
+
+```bash
+export DUOS_ACCESS_TOKEN="<access-token>"
+python refresh_duos_datasets.py
+```
+
+The complete, unmodified dataset records returned by the paginated DUOS search
+are stored as `data/dataset_results/datasets_YYYYMMDD.json`. A successful
+refresh on the same date replaces that date's file.
+
 ### Search for Studies
 
-Run the `ADDE.py` script to search for studies by title and extract metadata:
+Run the `ADDE.py` script to search the newest downloaded dataset index by title
+and extract metadata:
 
 ```bash
 python ADDE.py --query "<search-string>"
@@ -35,19 +58,22 @@ python ADDE.py --query "<search-string>"
 
 - **Arguments**:
   - `--query`: The search string to match study titles.
+  - `--dataset-file`: Optional path to a specific versioned dataset JSON file.
 
 - **Output**:
-  - Results are saved in the `query_results/<sanitized_study_name>` directory as `study_results.csv`.
+  - Results are saved in the `data/query_results/<sanitized_study_name>` directory as `study_results.csv`.
 
 
 
 ## Files
 
 - `ADDE.py`: Main script for searching studies and extracting metadata.
+- `refresh_duos_datasets.py`: Retrieves and versions the current DUOS dataset index.
 - `phs2dd.py`: Script for retrieving and converting data dictionaries from dbGaP.
 - `tdr2dd.py`: Script for creating data dictionaries from the TDR.
 - `requirements.txt`: List of Python dependencies.
-- `query_results`: Directory where query results are saved.
+- `data/dataset_results`: Directory where versioned DUOS responses are saved.
+- `data/query_results`: Directory where query results are saved.
 
 ## Example Workflow
 
@@ -76,6 +102,4 @@ Logs for data dictionary processing are saved in the specified output directory 
 ## License
 
 This project is licensed under the MIT License. See the LICENSE file for details.
-
-
 
